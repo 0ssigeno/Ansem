@@ -3,7 +3,9 @@ package internal
 import (
 	"bufio"
 	"log"
+	"math/rand"
 	"os"
+	"time"
 )
 
 func GetTeamAsChan(fileTeam string) chan string {
@@ -18,6 +20,8 @@ func GetTeamAsChan(fileTeam string) chan string {
 	for scanner.Scan() {
 		lines = append(lines, scanner.Text())
 	}
+	rand.Seed(time.Now().UnixNano())
+	rand.Shuffle(len(lines), func(i, j int) { lines[i], lines[j] = lines[j], lines[i] })
 	file.Close()
 	go func() {
 		for _, line := range lines {

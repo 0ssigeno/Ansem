@@ -22,7 +22,7 @@ type RuCtfFlag struct {
 
 func RuCTFSubmitHTTP(submitCtx context.Context) {
 
-	flagChannel := submitCtx.Value("flagChannel").(<-chan string)
+	flagChannel := submitCtx.Value("flagChannel").(chan string)
 	gameServer := submitCtx.Value("gameServer").(string)
 	token := submitCtx.Value("token").(string)
 	alreadySubmitted := submitCtx.Value("alreadySubmitted").(*sync.Map)
@@ -80,10 +80,16 @@ func RuCTFSubmitHTTP(submitCtx context.Context) {
 /*
 Old type of submission
 */
-func RuCTFSubmitNC(gameServer string, acceptedFlag string, flagChannel <-chan string, alreadySubmitted *sync.Map, token string) {
+func RuCTFSubmitNC(submitCtx context.Context) {
+
+	flagChannel := submitCtx.Value("flagChannel").(chan string)
+	gameServer := submitCtx.Value("gameServer").(string)
+	acceptedFlag := submitCtx.Value("flagAccepted").(string)
+	// token := submitCtx.Value("token").(string)
+	alreadySubmitted := submitCtx.Value("alreadySubmitted").(*sync.Map)
 
 	//Create the tcp connection
-	connection, err := net.DialTimeout("tcp", gameServer, 10*time.Second)
+	connection, err := net.DialTimeout("tcp", gameServer, 100*time.Second)
 	if err != nil {
 		log.Fatalf("SUBMITTER\tConnection Error TCP:\t Server %s\n Trace:%s\n", gameServer, err)
 	}
@@ -97,16 +103,23 @@ func RuCTFSubmitNC(gameServer string, acceptedFlag string, flagChannel <-chan st
 			fmt.Fprintf(connection, "%s\n", flag)
 			//Read the response
 			response, _ := reader.ReadString('\n')
+			// Check if it was already sent
+			_, result := alreadySubmitted.Load(flag)
 			//If it's accepted, store it
-			if strings.Contains(response, acceptedFlag) {
+
+			if strings.Contains(response, acceptedFlag) && !result {
+				fmt.Println("SENDED", flag)
 				alreadySubmitted.Store(flag, true)
 
+			} else {
+				fmt.Println("ERROR", flag, "response", response)
+				alreadySubmitted.Store(flag, true)
 			}
-			//After x seconds without flag, stop
+
+		//After x seconds without flag, stop
 		case <-time.After(10 * time.Second):
 			connection.Close()
-			fmt.Print("Chiudo\n")
-			time.Sleep(10 * time.Second)
+			time.Sleep(2 * time.Second)
 			connection, err = net.DialTimeout("tcp", gameServer, 10*time.Second)
 			if err != nil {
 				log.Fatalf("SUBMITTER\tConnection Error TCP:\t Server %s\n Trace:%s\n", gameServer, err)

@@ -3,16 +3,18 @@ package internal
 import (
 	"Ansem/internal/submitters"
 	"context"
-	"log"
+	//"log"
+
+	//	"log"
 	"sync"
 )
 
 func StartSubmitter(submitterCtx context.Context, wg *sync.WaitGroup) {
 	defer wg.Done()
 
-	toSubmit := submitterCtx.Value("submit").(<-chan string)
+	toSubmit := submitterCtx.Value("submit").(chan string)
 	//Init submitters
-	submitFunction := submitters.RuCTFSubmitHTTP
+	submitFunction := submitters.RuCTFSubmitNC
 
 	//Create a thread safe map to verify flags
 	var submitted sync.Map
@@ -29,11 +31,11 @@ func StartSubmitter(submitterCtx context.Context, wg *sync.WaitGroup) {
 		//The regex is checked via exploiter
 		//If is present or doesn't match the flag regexp continue
 		if _, result := submitted.Load(flag); result {
-			log.Printf("SUBMITTER:\t flag %s already retrieved!\n", flag)
+			//log.Printf("SUBMITTER:\t flag %s already retrieved!\n", flag)
 			continue
 		} else {
 			flagChannel <- flag
-			log.Printf("SUBMITTER:\t flag %s is new, now i will send it!\n", flag)
+			//log.Printf("SUBMITTER:\t flag %s is new, now i will send it!\n", flag)
 		}
 	}
 
