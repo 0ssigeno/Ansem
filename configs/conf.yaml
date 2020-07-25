@@ -4,8 +4,10 @@ team_dir : "/home/ossigeno/Github/Ansem/teams/"
 #gameserver: "localhost:4444"
 gameserver: "submission.faustctf.net:666"
 workers: 8
-submission_type: "TCP"
-flag_regex: "/*"
+submission_type: "nc"
+flag_regex: "🏳️‍🌈*"
+#flag_regex: "🏳️\u200d🌈\\X{4}"
+
 # flag_regex: "FAUST_[A-Za-z0-9/+]{32}"
 flag_accepted: "DIOCANE"
 token: "some_kind_of_token"
