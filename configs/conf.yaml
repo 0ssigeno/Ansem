@@ -1,12 +1,12 @@
-exploits_dir: "/home/ossigeno/Github/Ansem/testExpl/"
+exploits_dir: "/tmp/testExpl/"
 tick: 5
-team_dir : "/home/ossigeno/Github/Ansem/teams/"
-#gameserver: "localhost:4444"
-gameserver: "submission.faustctf.net:666"
-workers: 8
+team_dir : "/tmp/teams/"
+gameserver: "localhost:4444"
+workers: 2
 submission_type: "TCP"
 flag_regex: "/*"
 # flag_regex: "FAUST_[A-Za-z0-9/+]{32}"
-flag_accepted: "DIOCANE"
+flag_accepted: "OK"
+flag_duplicated: "DUPLICATED"
 token: "some_kind_of_token"
 timeout: 8

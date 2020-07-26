@@ -21,6 +21,7 @@ type conf struct {
 	SubmissionType string `yaml:"submission_type"`
 	FlagRegex      string `yaml:"flag_regex"`
 	FlagAccepted   string `yaml:"flag_accepted"`
+	FlagDuplicated string `yaml:"flag_duplicated"`
 	Token          string `yaml:"token"`
 	Timeout        int    `yaml:"timeout"`
 }
@@ -86,10 +87,12 @@ func main() {
 	submitterCtx = context.WithValue(submitterCtx, "flagRegex", c.FlagRegex)
 	submitterCtx = context.WithValue(submitterCtx, "subType", c.SubmissionType)
 	submitterCtx = context.WithValue(submitterCtx, "flagAccepted", c.FlagAccepted)
+	submitterCtx = context.WithValue(submitterCtx, "flagDuplicated", c.FlagDuplicated)
 	submitterCtx = context.WithValue(submitterCtx, "token", c.Token)
 
 	go internal.StartExploiter(exploitCtx, &wg)
 	go internal.StartSubmitter(submitterCtx, &wg)
+	go internal.StartStatistics()
 
 	wg.Wait()
 }

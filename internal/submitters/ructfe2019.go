@@ -85,6 +85,7 @@ func RuCTFSubmitNC(submitCtx context.Context) {
 	flagChannel := submitCtx.Value("flagChannel").(chan string)
 	gameServer := submitCtx.Value("gameServer").(string)
 	acceptedFlag := submitCtx.Value("flagAccepted").(string)
+	flagDuplicated := submitCtx.Value("flagDuplicated").(string)
 	// token := submitCtx.Value("token").(string)
 	alreadySubmitted := submitCtx.Value("alreadySubmitted").(*sync.Map)
 
@@ -109,10 +110,16 @@ func RuCTFSubmitNC(submitCtx context.Context) {
 
 			if strings.Contains(response, acceptedFlag) && !result {
 				fmt.Println("SENDED", flag)
+				Stats.IncrementSubmitted()
+				alreadySubmitted.Store(flag, true)
+			} else if strings.Contains(response, flagDuplicated) && !result {
+				fmt.Println("DUPLICATED", flag)
+				Stats.IncrementDuplicated()
 				alreadySubmitted.Store(flag, true)
 
 			} else {
 				fmt.Println("ERROR", flag, "response", response)
+				Stats.IncrementFailed()
 				alreadySubmitted.Store(flag, true)
 			}
 
