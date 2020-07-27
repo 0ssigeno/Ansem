@@ -1,7 +1,7 @@
 package main
 
 import (
-	"./internal"
+	"Ansem/internal"
 	"context"
 	"fmt"
 	"os"
@@ -56,11 +56,13 @@ func main() {
 	submitterCtx = context.WithValue(submitterCtx, "flagRegex", c.FlagRegex)
 	submitterCtx = context.WithValue(submitterCtx, "subType", c.SubmissionType)
 	submitterCtx = context.WithValue(submitterCtx, "flagAccepted", c.FlagAccepted)
+	submitterCtx = context.WithValue(submitterCtx, "flagDuplicated", c.FlagDuplicated)
 	submitterCtx = context.WithValue(submitterCtx, "token", c.Token)
 	submitterCtx = context.WithValue(submitterCtx, "workers", c.Workers)
 
 	go internal.StartExploiter(exploitCtx, &wg)
 	go internal.StartSubmitter(submitterCtx, &wg)
+	go internal.StartStatistics()
 
 	wg.Wait()
 }
