@@ -6,11 +6,11 @@ threshold: 10
 #gameserver: "submission.faustctf.net:666"
 workers: 8
 submission_type: "nc"
-flag_regex: "C.*"
+flag_regex: ".*"
 #flag_regex: "🏳️\u200d🌈\\X{4}"
 
 # flag_regex: "FAUST_[A-Za-z0-9/+]{32}"
-flag_accepted: "OK"
+flag_accepted: "DIOCANE"
 flag_duplicated: "DUPLICATED"
 token: "some_kind_of_token"
 timeout: 8

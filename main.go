@@ -44,28 +44,6 @@ func (c *Conf) GetConf() *Conf {
 	return c
 }
 
-func (c *Conf) GetContext() context.Context {
-	ctx := context.Background()
-
-	toSubmit := make(chan exploit.Flag, c.Workers*5)
-
-	ctx = context.WithValue(ctx, "exploitDir", c.Directory)
-	ctx = context.WithValue(ctx, "tick", c.Tick)
-	ctx = context.WithValue(ctx, "teamDir", c.TeamDir)
-	ctx = context.WithValue(ctx, "workers", c.Workers)
-	ctx = context.WithValue(ctx, "submit", toSubmit)
-	ctx = context.WithValue(ctx, "flagRegex", c.FlagRegex)
-	ctx = context.WithValue(ctx, "timeout", c.Timeout)
-	ctx = context.WithValue(ctx, "threshold", c.Threshold)
-	ctx = context.WithValue(ctx, "gameServer", c.GameServer)
-	ctx = context.WithValue(ctx, "flagRegex", c.FlagRegex)
-	ctx = context.WithValue(ctx, "subType", c.SubmissionType)
-	ctx = context.WithValue(ctx, "flagAccepted", c.FlagAccepted)
-	ctx = context.WithValue(ctx, "flagDuplicated", c.FlagDuplicated)
-	ctx = context.WithValue(ctx, "token", c.Token)
-	return ctx
-}
-
 func main() {
 	var c Conf
 	c.GetConf()
@@ -99,9 +77,27 @@ func main() {
 	wg := sync.WaitGroup{}
 	wg.Add(2)
 
-	exploitCtx := c.GetContext()
+	toSubmit := make(chan exploit.Flag, c.Workers*5)
 
-	submitterCtx := c.GetContext()
+	exploitCtx := context.Background()
+	exploitCtx = context.WithValue(exploitCtx, "exploitDir", c.Directory)
+	exploitCtx = context.WithValue(exploitCtx, "tick", c.Tick)
+	exploitCtx = context.WithValue(exploitCtx, "teamDir", c.TeamDir)
+	exploitCtx = context.WithValue(exploitCtx, "workers", c.Workers)
+	exploitCtx = context.WithValue(exploitCtx, "submit", toSubmit)
+	exploitCtx = context.WithValue(exploitCtx, "flagRegex", c.FlagRegex)
+	exploitCtx = context.WithValue(exploitCtx, "timeout", c.Timeout)
+	exploitCtx = context.WithValue(exploitCtx, "threshold", c.Threshold)
+
+	submitterCtx := context.Background()
+	submitterCtx = context.WithValue(submitterCtx, "gameServer", c.GameServer)
+	submitterCtx = context.WithValue(submitterCtx, "submit", toSubmit)
+	submitterCtx = context.WithValue(submitterCtx, "flagRegex", c.FlagRegex)
+	submitterCtx = context.WithValue(submitterCtx, "subType", c.SubmissionType)
+	submitterCtx = context.WithValue(submitterCtx, "flagAccepted", c.FlagAccepted)
+	submitterCtx = context.WithValue(submitterCtx, "flagDuplicated", c.FlagDuplicated)
+	submitterCtx = context.WithValue(submitterCtx, "token", c.Token)
+	submitterCtx = context.WithValue(submitterCtx, "workers", c.Workers)
 
 	go exploit.StartExploiter(exploitCtx, &wg)
 	go submit.StartSubmitter(submitterCtx, &wg)
