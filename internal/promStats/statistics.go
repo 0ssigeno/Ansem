@@ -1,11 +1,10 @@
-package internal
+package promStats
 
 import (
-	sub "Ansem/internal/submitters"
-        "net/http"
+	"net/http"
 
-        "github.com/prometheus/client_golang/prometheus"
-        "github.com/prometheus/client_golang/prometheus/promhttp"
+	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 )
 
 func StartStatistics() {
@@ -15,7 +14,7 @@ func StartStatistics() {
 			Help: "Counts submitted flags",
 		},
 		func() float64 {
-			return float64(sub.Stats.GetSubmitted())
+			return float64(Stats.GetSubmitted())
 		}))
 
 	prometheus.MustRegister(prometheus.NewCounterFunc(
@@ -24,7 +23,7 @@ func StartStatistics() {
 			Help: "Counts failed flags",
 		},
 		func() float64 {
-			return float64(sub.Stats.GetFailed())
+			return float64(Stats.GetFailed())
 		}))
 
 	prometheus.MustRegister(prometheus.NewCounterFunc(
@@ -33,9 +32,9 @@ func StartStatistics() {
 			Help: "Counts duplicated flags",
 		},
 		func() float64 {
-			return float64(sub.Stats.GetDuplicated())
+			return float64(Stats.GetDuplicated())
 		}))
 
-        http.Handle("/metrics", promhttp.Handler())
-        http.ListenAndServe(":2112", nil)
+	http.Handle("/metrics", promhttp.Handler())
+	_ = http.ListenAndServe(":2112", nil)
 }

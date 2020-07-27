@@ -1,4 +1,4 @@
-package submitters
+package promStats
 
 import "sync/atomic"
 
@@ -10,14 +10,14 @@ import "sync/atomic"
  */
 type FlagCounter struct {
 	val int32
-};
+}
 
 func (f *FlagCounter) Increment() {
 	atomic.AddInt32(&f.val, 1)
 }
 
 func (f *FlagCounter) Get() int32 {
-	return atomic.LoadInt32(&f.val);
+	return atomic.LoadInt32(&f.val)
 }
 
 /**
@@ -25,35 +25,35 @@ func (f *FlagCounter) Get() int32 {
  */
 type Statistics struct {
 	/* Number of failed Flags */
-	flag_failed     FlagCounter
+	flagFailed FlagCounter
 	/* Number of Flags Correctly submitted */
-	flag_submitted  FlagCounter
+	flagSubmitted FlagCounter
 	/* Number of duplicated Flags */
-	flag_duplicated FlagCounter
-};
-
-func (s *Statistics) IncrementFailed() {
-	s.flag_failed.Increment()
+	flagDuplicated FlagCounter
 }
 
-func (s *Statistics) GetFailed() (int32) {
-	return s.flag_failed.Get()
+func (s *Statistics) IncrementFailed() {
+	s.flagFailed.Increment()
+}
+
+func (s *Statistics) GetFailed() int32 {
+	return s.flagFailed.Get()
 }
 
 func (s *Statistics) IncrementSubmitted() {
-	s.flag_submitted.Increment()
+	s.flagSubmitted.Increment()
 }
 
-func (s *Statistics) GetSubmitted() (int32) {
-	return s.flag_submitted.Get()
+func (s *Statistics) GetSubmitted() int32 {
+	return s.flagSubmitted.Get()
 }
 
 func (s *Statistics) IncrementDuplicated() {
-	s.flag_duplicated.Increment()
+	s.flagDuplicated.Increment()
 }
 
-func (s *Statistics) GetDuplicated() (int32) {
-	return s.flag_duplicated.Get()
+func (s *Statistics) GetDuplicated() int32 {
+	return s.flagDuplicated.Get()
 }
 
 var Stats Statistics
