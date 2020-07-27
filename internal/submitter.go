@@ -14,9 +14,9 @@ import (
 	"time"
 )
 
-func http_sub(submitCtx context.Context) {
+func httpSub(submitCtx context.Context) {
 
-	//flagChannel := submitCtx.Value("flagChannel").(chan string)
+	//flagChannel := submitCtx.Value("flagChannel").(chan flag)
 	//gameServer := submitCtx.Value("gameServer").(string)
 	//token := submitCtx.Value("token").(string)
 	//alreadySubmitted := submitCtx.Value("alreadySubmitted").(*sync.Map)
@@ -71,9 +71,9 @@ func http_sub(submitCtx context.Context) {
 
 }
 
-func nc_sub(submitCtx context.Context) {
+func ncSub(submitCtx context.Context) {
 
-	flagChannel := submitCtx.Value("flagChannel").(chan string)
+	flagChannel := submitCtx.Value("flagChannel").(chan Flag)
 	gameServer := submitCtx.Value("gameServer").(string)
 	acceptedFlag := submitCtx.Value("flagAccepted").(string)
 	alreadySubmitted := submitCtx.Value("alreadySubmitted").(*sync.Map)
@@ -90,24 +90,26 @@ func nc_sub(submitCtx context.Context) {
 		//Read the flag
 		case flag := <-flagChannel:
 			//Send the flag
-			fmt.Fprintf(connection, "%s\n", flag)
+			flagValue := flag.flag
+			fmt.Fprintf(connection, "%s\n", flagValue)
 			//Read the response
 			response, _ := reader.ReadString('\n')
 			// Check if it was already sent
-			_, result := alreadySubmitted.Load(flag)
+			_, result := alreadySubmitted.Load(flagValue)
 			//If it's accepted, store it
 
 			if strings.Contains(response, acceptedFlag) && !result {
-				fmt.Println("SENDED", flag)
-				alreadySubmitted.Store(flag, true)
+				fmt.Println("SENDED", flagValue)
+				alreadySubmitted.Store(flagValue, true)
 
 			} else {
-				fmt.Println("ERROR", flag, "response", response)
-				alreadySubmitted.Store(flag, false)
+				fmt.Println("ERROR", flagValue, "response", response)
+				alreadySubmitted.Store(flagValue, false)
 			}
 
 		//After x seconds without flag, stop
 		case <-time.After(10 * time.Second):
+			log.Printf("SUBMITTER\tRestarting connection with flag master")
 			connection.Close()
 			time.Sleep(5 * time.Second)
 			connection, err = net.DialTimeout("tcp", gameServer, 10*time.Second)
@@ -121,28 +123,28 @@ func nc_sub(submitCtx context.Context) {
 func StartSubmitter(submitterCtx context.Context, wg *sync.WaitGroup) {
 	defer wg.Done()
 
-	toSubmit := submitterCtx.Value("submit").(chan string)
+	toSubmit := submitterCtx.Value("submit").(chan Flag)
+	workers := submitterCtx.Value("workers").(int)
 	var submitted sync.Map
 
 	//Create channel to pass filtered flags
-	flagChannel := make(chan string, 10)
+	flagChannel := make(chan Flag, workers*5)
 	submitterCtx = context.WithValue(submitterCtx, "flagChannel", flagChannel)
 	submitterCtx = context.WithValue(submitterCtx, "alreadySubmitted", &submitted)
 
 	//Start the submitter
 	switch subType := submitterCtx.Value("subType").(string); subType {
 	case "nc":
-		go nc_sub(submitterCtx)
+		go ncSub(submitterCtx)
 	case "http":
-		go http_sub(submitterCtx)
+		go httpSub(submitterCtx)
 	default:
 		log.Fatalf("SUBMITTER:\n Submission type %s doesn't exist!\n", subType)
 	}
 	//Check if the flags are already submitted
 	for flag := range toSubmit {
 		//The regex is checked via exploiter
-		//If is present or doesn't match the flag regexp continue
-		if _, result := submitted.Load(flag); result {
+		if _, result := submitted.Load(flag.flag); result {
 			// already submitted
 			continue
 		} else {

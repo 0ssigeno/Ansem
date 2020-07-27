@@ -1,48 +1,17 @@
 package main
 
 import (
-	"Ansem/internal"
+	"./internal"
 	"context"
 	"fmt"
-	"gopkg.in/yaml.v2"
-	"io/ioutil"
-	"log"
 	"os"
 	"sync"
 	"text/tabwriter"
 )
 
-type conf struct {
-	Directory      string `yaml:"exploits_dir"`
-	Tick           int    `yaml:"tick"`
-	TeamDir        string `yaml:"team_dir"`
-	GameServer     string `yaml:"gameserver"`
-	Workers        int    `yaml:"workers"`
-	SubmissionType string `yaml:"submission_type"`
-	FlagRegex      string `yaml:"flag_regex"`
-	FlagAccepted   string `yaml:"flag_accepted"`
-	Token          string `yaml:"token"`
-	Timeout        int    `yaml:"timeout"`
-}
-
-// Function that initialize the config
-func (c *conf) getConf() *conf {
-
-	yamlFile, err := ioutil.ReadFile("configs/conf.yaml")
-	if err != nil {
-		log.Fatalf("yamlFile.Get err   #%v ", err)
-	}
-	err = yaml.Unmarshal(yamlFile, c)
-	if err != nil {
-		log.Fatalf("Unmarshal: %v", err)
-	}
-
-	return c
-}
-
 func main() {
-	var c conf
-	c.getConf()
+	var c internal.Conf
+	c.GetConf()
 
 	//Fix path if the last char is not "/"
 	if c.Directory[len(c.Directory)-1] != '/' {
@@ -55,6 +24,7 @@ func main() {
 	_, _ = fmt.Fprintf(writer, "Hi, I'm starting with these settings:\n\n"+
 		"Exploits Dir:\t%s\n"+
 		"Gameserver:\t%s\n"+
+		"Threshold:\t%d\n"+
 		"TeamDir:\t%s\n"+
 		"SubmissionType:\t%s\n"+
 		"Flag Regex:\t%s\n"+
@@ -63,10 +33,9 @@ func main() {
 		"Token:\t%s\n"+
 		"Timeout:\t%d\n",
 
-		c.Directory, c.GameServer, c.TeamDir, c.SubmissionType, c.FlagRegex, c.Tick, c.Workers, c.Token, c.Timeout)
+		c.Directory, c.GameServer, c.Threshold, c.TeamDir, c.SubmissionType, c.FlagRegex, c.Tick, c.Workers, c.Token, c.Timeout)
 	writer.Flush()
-
-	toSubmit := make(chan string, 20)
+	toSubmit := make(chan internal.Flag, c.Workers*5)
 
 	wg := sync.WaitGroup{}
 	wg.Add(2)
@@ -79,6 +48,7 @@ func main() {
 	exploitCtx = context.WithValue(exploitCtx, "submit", toSubmit)
 	exploitCtx = context.WithValue(exploitCtx, "flagRegex", c.FlagRegex)
 	exploitCtx = context.WithValue(exploitCtx, "timeout", c.Timeout)
+	exploitCtx = context.WithValue(exploitCtx, "threshold", c.Threshold)
 
 	submitterCtx := context.Background()
 	submitterCtx = context.WithValue(submitterCtx, "gameServer", c.GameServer)
@@ -87,6 +57,7 @@ func main() {
 	submitterCtx = context.WithValue(submitterCtx, "subType", c.SubmissionType)
 	submitterCtx = context.WithValue(submitterCtx, "flagAccepted", c.FlagAccepted)
 	submitterCtx = context.WithValue(submitterCtx, "token", c.Token)
+	submitterCtx = context.WithValue(submitterCtx, "workers", c.Workers)
 
 	go internal.StartExploiter(exploitCtx, &wg)
 	go internal.StartSubmitter(submitterCtx, &wg)
